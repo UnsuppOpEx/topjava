@@ -29,20 +29,20 @@ public class UserMealsUtil {
     }
 
     public static List<UserMealWithExcess> filteredByCycles(List<UserMeal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        // TODO return filtered list with excess. Implement by cycles
 
-        List<UserMealWithExcess> result = new ArrayList<>();
+        //Находим количество калорий за день
         Map<LocalDate, Integer> caloriesDay = new HashMap<>();
-
         for (UserMeal userMeal : meals) {
             LocalDate localDate = userMeal.getDateTime().toLocalDate();
             int calories = caloriesDay.getOrDefault(localDate, 0);
             caloriesDay.put(localDate, calories + userMeal.getCalories());
         }
 
+        //Находим береизбыток калорий за день
+        List<UserMealWithExcess> result = new ArrayList<>();
         for (UserMeal userMeal : meals) {
             LocalTime dateTime = userMeal.getDateTime().toLocalTime();
-            if (dateTime.isAfter(startTime) && dateTime.isBefore(endTime)) {
+            if (TimeUtil.isBetweenHalfOpen(dateTime, startTime, endTime)) {
                 LocalDate localDate = userMeal.getDateTime().toLocalDate();
 
                 boolean excess = caloriesDay.get(localDate) > caloriesPerDay;
