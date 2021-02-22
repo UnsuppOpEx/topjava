@@ -6,40 +6,55 @@ import org.springframework.stereotype.Repository;
 import ru.javawebinar.topjava.model.User;
 import ru.javawebinar.topjava.repository.UserRepository;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Repository
 public class InMemoryUserRepository implements UserRepository {
     private static final Logger log = LoggerFactory.getLogger(InMemoryUserRepository.class);
 
+    private final Map<Integer, User> hashMap = new ConcurrentHashMap<>();
+    private final AtomicInteger counter = new AtomicInteger(0);
+
     @Override
     public boolean delete(int id) {
         log.info("delete {}", id);
-        return true;
+        return hashMap.remove(id) != null;
     }
+
 
     @Override
     public User save(User user) {
         log.info("save {}", user);
-        return user;
+            if(user.isNew()) {
+                user.setId(counter.incrementAndGet());
+                return user;
+            }
+            return hashMap.computeIfPresent(user.getId(), (id, oldUser) -> user);
     }
 
     @Override
     public User get(int id) {
         log.info("get {}", id);
-        return null;
+        return hashMap.get(id);
     }
 
     @Override
-    public List<User> getAll() {
+    public Collection<User> getAll() {
         log.info("getAll");
-        return Collections.emptyList();
+        return hashMap.values().stream()
+                .sorted(Comparator.comparing(User::getName).thenComparing(User::getEmail))
+                .collect(Collectors.toList());
     }
 
     @Override
     public User getByEmail(String email) {
         log.info("getByEmail {}", email);
-        return null;
+        return getAll().stream()
+                .filter(e -> e.getEmail().equals(email))
+                .findFirst()
+                .orElse(null);
     }
 }

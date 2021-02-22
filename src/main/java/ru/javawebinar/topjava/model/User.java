@@ -77,6 +77,10 @@ public class User extends AbstractNamedEntity {
         return password;
     }
 
+    public boolean isNew(int id) {
+        return super.id == null;
+    }
+
     @Override
     public String toString() {
         return "User (" +
